@@ -131,14 +131,13 @@ USE_TZ = True
 # --- STATIC FILES ---
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
-if IS_PRODUCTION:
-    STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
-# --- MEDIA FILES ---
-# Locally: plain folder (fine, MySQL Workbench setup, this is just dev testing).
-# On Render: Cloudinary — genuinely persistent storage, so uploaded
-# images/PDFs survive redeploys/restarts (unlike the plain ephemeral
-# folder approach we tried before, which kept getting wiped).
+# --- STATIC & MEDIA FILE STORAGE (Django 4.2+ STORAGES setting) ---
+# Locally: plain filesystem storage (fine, MySQL Workbench dev setup).
+# On Render: Cloudinary for media (genuinely persistent) + Whitenoise for
+# static files. Using the modern STORAGES dict instead of the older
+# DEFAULT_FILE_STORAGE/STATICFILES_STORAGE settings, since Django 5.2
+# prioritizes STORAGES and the older settings weren't reliably honored.
 MEDIA_URL = "/media/"
 if IS_PRODUCTION:
     CLOUDINARY_STORAGE = {
@@ -146,9 +145,24 @@ if IS_PRODUCTION:
         "API_KEY": os.environ.get("CLOUDINARY_API_KEY"),
         "API_SECRET": os.environ.get("CLOUDINARY_API_SECRET"),
     }
-    DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
+    STORAGES = {
+        "default": {
+            "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        },
+    }
 else:
     MEDIA_ROOT = BASE_DIR / "media"
+    STORAGES = {
+        "default": {
+            "BACKEND": "django.core.files.storage.FileSystemStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
