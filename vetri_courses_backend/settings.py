@@ -130,11 +130,8 @@ if IS_PRODUCTION:
 # third-party storage backend involved — Django Admin looks identical
 # in both environments.
 MEDIA_URL = "/media/"
-if IS_PRODUCTION:
-    MEDIA_ROOT = os.environ.get("MEDIA_ROOT", "/var/data/media")
-else:
-    MEDIA_ROOT = BASE_DIR / "media"
-
+MEDIA_ROOT = BASE_DIR / "media"
+ 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # --- CORS ---
