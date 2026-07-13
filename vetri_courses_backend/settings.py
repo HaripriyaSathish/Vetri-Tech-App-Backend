@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "corsheaders",
     "mobile_courses",
+    "site_content",
 ]
 
 if IS_PRODUCTION:
