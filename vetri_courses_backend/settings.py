@@ -29,7 +29,7 @@ SECRET_KEY = os.environ.get(
 DEBUG = not IS_PRODUCTION
 
 ALLOWED_HOSTS = ["*"] if not IS_PRODUCTION else [
-    "your-app-name.onrender.com",  # replace with your actual Render URL once created
+    "vetri-tech-app-backend.onrender.com",  # replace with your actual Render URL once created
 ]
 
 # --- APPS ---
