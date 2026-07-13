@@ -18,12 +18,13 @@ regardless of whether images are found.
 import os
 from django.core.files import File
 from django.core.management.base import BaseCommand
+from django.conf import settings
 from courses.models import Course, Tool, BenefitSection, Faq
 
-# Point this at the `assets` folder inside your Vetri Tech mobile app project,
-# e.g. r"C:\Users\you\vetri-tech-app\assets" or "/Users/you/vetri-tech-app/assets"
-# Leave as None to skip all image uploads and just import text data.
-ASSETS_DIR = r"C:\Vetri Tech Mobile App\vetri-tech-app\assets"
+# Points at the import_assets folder inside THIS project (travels with the
+# code to GitHub/Render), instead of the mobile app's local folder on this
+# specific PC. Works both locally and when run from Render's Shell.
+ASSETS_DIR = os.path.join(settings.BASE_DIR, "import_assets")
 
 
 def resolve_asset(relative_path):
