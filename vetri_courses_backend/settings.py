@@ -32,6 +32,12 @@ ALLOWED_HOSTS = ["*"] if not IS_PRODUCTION else [
     "vetri-tech-app-backend.onrender.com",  # replace with your actual Render URL once created
 ]
 
+if IS_PRODUCTION:
+    CSRF_TRUSTED_ORIGINS = ["https://vetri-tech-app-backend.onrender.com"]
+    # Render terminates HTTPS at its proxy and forwards plain HTTP internally,
+    # adding this header so Django knows the original request was secure.
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
 # --- APPS ---
 INSTALLED_APPS = [
     "django.contrib.admin",
