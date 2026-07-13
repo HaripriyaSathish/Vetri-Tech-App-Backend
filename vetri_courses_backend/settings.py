@@ -5,10 +5,13 @@ other project's database, code, or files.
 
 This single file works in BOTH environments automatically:
 - Locally: uses MySQL (MySQL Workbench) — unchanged from before.
-- On Render: uses PostgreSQL + a Persistent Disk for media files.
-The switch happens automatically based on whether DATABASE_URL is set
-(Render sets it automatically once you attach a Postgres instance;
-it's never set on your local machine).
+- On PythonAnywhere: uses SQLite (their free tier doesn't include MySQL or
+  Postgres). SQLite is a single file on disk — genuinely fine for this
+  project's scale (a handful of courses, occasional admin use, a mobile
+  app hitting a read-mostly API).
+The switch happens automatically based on the ON_PYTHONANYWHERE environment
+variable, which we set directly in the WSGI configuration file over there
+(never set on your local machine).
 """
 
 import os
@@ -16,9 +19,8 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Set to True automatically whenever this is running on Render
-# (DATABASE_URL only ever exists in that environment).
-IS_PRODUCTION = bool(os.environ.get("DATABASE_URL"))
+# Set to True only when running on PythonAnywhere (set in the WSGI config file there).
+IS_PRODUCTION = os.environ.get("ON_PYTHONANYWHERE") == "true"
 
 # --- SECURITY ---
 SECRET_KEY = os.environ.get(
@@ -29,14 +31,11 @@ SECRET_KEY = os.environ.get(
 DEBUG = not IS_PRODUCTION
 
 ALLOWED_HOSTS = ["*"] if not IS_PRODUCTION else [
-    "vetri-tech-app-backend.onrender.com",  # replace with your actual Render URL once created
+    "haripriyar2303.pythonanywhere.com",  # update if your PythonAnywhere username differs
 ]
 
 if IS_PRODUCTION:
-    CSRF_TRUSTED_ORIGINS = ["https://vetri-tech-app-backend.onrender.com"]
-    # Render terminates HTTPS at its proxy and forwards plain HTTP internally,
-    # adding this header so Django knows the original request was secure.
-    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    CSRF_TRUSTED_ORIGINS = ["https://haripriyar2303.pythonanywhere.com"]
 
 # --- APPS ---
 INSTALLED_APPS = [
@@ -54,7 +53,6 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",  # must stay near the top
     "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",  # serves admin's CSS/JS in production
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -84,16 +82,14 @@ TEMPLATES = [
 WSGI_APPLICATION = "vetri_courses_backend.wsgi.application"
 
 # --- DATABASE ---
-# Locally: MySQL (MySQL Workbench). On Render: PostgreSQL (Render doesn't
-# offer managed MySQL — same reasoning as your EduStruc migration).
+# Locally: MySQL (MySQL Workbench). On PythonAnywhere: SQLite (single file,
+# persists normally on their disk — no separate database service needed).
 if IS_PRODUCTION:
-    import dj_database_url
-
     DATABASES = {
-        "default": dj_database_url.config(
-            default=os.environ.get("DATABASE_URL"),
-            conn_max_age=600,
-        )
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
     }
 else:
     DATABASES = {
@@ -123,21 +119,18 @@ USE_I18N = True
 USE_TZ = True
 
 # --- STATIC FILES ---
+# PythonAnywhere serves static files via a mapping you configure in their
+# "Web" tab (pointing a URL like /static/ at this STATIC_ROOT folder) —
+# no whitenoise or extra packages needed, unlike the Render setup.
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
-if IS_PRODUCTION:
-    STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # --- MEDIA FILES ---
-# Locally: plain folder in the project (fine for local testing).
-# On Render: a Persistent Disk mounted at /var/data, so uploaded course
-# images/PDFs survive redeploys — Django's default FileSystemStorage (same
-# one used locally) just points at a different, persistent folder. No
-# third-party storage backend involved — Django Admin looks identical
-# in both environments.
+# Plain folder, same idea locally and on PythonAnywhere — their disk
+# persists normally, so uploaded course images/PDFs just stay put.
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
- 
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # --- CORS ---
@@ -151,6 +144,9 @@ REST_FRAMEWORK = {
     ],
 }
 
+# --- LOGGING ---
+# Makes production errors print to console (visible in PythonAnywhere's
+# error log) instead of only trying to email admins (which we haven't set up).
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
