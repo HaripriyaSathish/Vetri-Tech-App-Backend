@@ -1,4 +1,7 @@
+from django.conf import settings
 from django.db import models
+
+from cloudinary_storage.storage import RawMediaCloudinaryStorage
 
 
 CATEGORY_CHOICES = [
@@ -22,7 +25,20 @@ class Course(models.Model):
     description = models.TextField()
     overview = models.TextField(blank=True)
     category = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
-    brochure_file = models.FileField(upload_to="courses/brochures/", blank=True, null=True)
+
+    # IMPORTANT: PDFs must use RawMediaCloudinaryStorage, not the default
+    # MediaCloudinaryStorage. The default storage uploads everything as
+    # Cloudinary's "image" resource type, which works fine for actual images
+    # (covers, icons) but silently mangles PDFs — Cloudinary tries to treat
+    # the PDF as an image, producing a file that downloads but won't open.
+    # RawMediaCloudinaryStorage uploads it as resource_type="raw" instead,
+    # which is what Cloudinary expects for PDFs/ZIPs/non-image documents.
+    brochure_file = models.FileField(
+        upload_to="courses/brochures/",
+        storage=RawMediaCloudinaryStorage() if settings.IS_PRODUCTION else None,
+        blank=True,
+        null=True,
+    )
 
     # controls display order on the courses list page
     order = models.PositiveIntegerField(default=0)
