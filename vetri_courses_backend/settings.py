@@ -48,6 +48,9 @@ INSTALLED_APPS = [
     "mobile_courses",
 ]
 
+if IS_PRODUCTION:
+    INSTALLED_APPS += ["cloudinary_storage", "cloudinary"]
+
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",  # must stay near the top
     "django.middleware.security.SecurityMiddleware",
@@ -132,12 +135,20 @@ if IS_PRODUCTION:
     STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # --- MEDIA FILES ---
-# Plain folder — no persistent disk on Render's free tier, so uploaded
-# images/PDFs can be wiped on redeploys/restarts. If that happens, just
-# re-run `python manage.py import_existing_courses` to restore them
-# (it's already wired into the Build Command).
+# Locally: plain folder (fine, MySQL Workbench setup, this is just dev testing).
+# On Render: Cloudinary — genuinely persistent storage, so uploaded
+# images/PDFs survive redeploys/restarts (unlike the plain ephemeral
+# folder approach we tried before, which kept getting wiped).
 MEDIA_URL = "/media/"
-MEDIA_ROOT = BASE_DIR / "media"
+if IS_PRODUCTION:
+    CLOUDINARY_STORAGE = {
+        "CLOUD_NAME": os.environ.get("CLOUDINARY_CLOUD_NAME"),
+        "API_KEY": os.environ.get("CLOUDINARY_API_KEY"),
+        "API_SECRET": os.environ.get("CLOUDINARY_API_SECRET"),
+    }
+    DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
+else:
+    MEDIA_ROOT = BASE_DIR / "media"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
