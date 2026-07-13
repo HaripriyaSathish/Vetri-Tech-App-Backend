@@ -1,17 +1,15 @@
 """
 Django settings for vetri_courses_backend project.
 This is a brand-new, standalone project — it does not touch EduStruc or any
-other project's database, code, or files.
+other project's database, code, or files (it uses its own separate Neon
+Postgres database, not EduStruc's Render database).
 
 This single file works in BOTH environments automatically:
 - Locally: uses MySQL (MySQL Workbench) — unchanged from before.
-- On PythonAnywhere: uses SQLite (their free tier doesn't include MySQL or
-  Postgres). SQLite is a single file on disk — genuinely fine for this
-  project's scale (a handful of courses, occasional admin use, a mobile
-  app hitting a read-mostly API).
-The switch happens automatically based on the ON_PYTHONANYWHERE environment
-variable, which we set directly in the WSGI configuration file over there
-(never set on your local machine).
+- On Render: uses PostgreSQL (via Neon), set through the DATABASE_URL
+  environment variable in Render's dashboard.
+The switch happens automatically based on whether DATABASE_URL is set
+(only ever set on Render, never on your local machine).
 """
 
 import os
@@ -19,8 +17,7 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Set to True only when running on PythonAnywhere (set in the WSGI config file there).
-IS_PRODUCTION = os.environ.get("ON_PYTHONANYWHERE") == "true"
+IS_PRODUCTION = bool(os.environ.get("DATABASE_URL"))
 
 # --- SECURITY ---
 SECRET_KEY = os.environ.get(
@@ -31,11 +28,12 @@ SECRET_KEY = os.environ.get(
 DEBUG = not IS_PRODUCTION
 
 ALLOWED_HOSTS = ["*"] if not IS_PRODUCTION else [
-    "haripriyar2303.pythonanywhere.com",  # update if your PythonAnywhere username differs
+    "vetri-tech-app-backend.onrender.com",
 ]
 
 if IS_PRODUCTION:
-    CSRF_TRUSTED_ORIGINS = ["https://haripriyar2303.pythonanywhere.com"]
+    CSRF_TRUSTED_ORIGINS = ["https://vetri-tech-app-backend.onrender.com"]
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 # --- APPS ---
 INSTALLED_APPS = [
@@ -53,6 +51,12 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",  # must stay near the top
     "django.middleware.security.SecurityMiddleware",
+]
+
+if IS_PRODUCTION:
+    MIDDLEWARE.append("whitenoise.middleware.WhiteNoiseMiddleware")  # serves admin's CSS/JS in production
+
+MIDDLEWARE += [
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -82,14 +86,17 @@ TEMPLATES = [
 WSGI_APPLICATION = "vetri_courses_backend.wsgi.application"
 
 # --- DATABASE ---
-# Locally: MySQL (MySQL Workbench). On PythonAnywhere: SQLite (single file,
-# persists normally on their disk — no separate database service needed).
+# Locally: MySQL (MySQL Workbench). On Render: PostgreSQL via Neon
+# (a database genuinely separate from EduStruc's, avoiding the shared
+# auth-table collision we hit when trying to reuse EduStruc's database).
 if IS_PRODUCTION:
+    import dj_database_url
+
     DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
-        }
+        "default": dj_database_url.config(
+            default=os.environ.get("DATABASE_URL"),
+            conn_max_age=600,
+        )
     }
 else:
     DATABASES = {
@@ -119,34 +126,32 @@ USE_I18N = True
 USE_TZ = True
 
 # --- STATIC FILES ---
-# PythonAnywhere serves static files via a mapping you configure in their
-# "Web" tab (pointing a URL like /static/ at this STATIC_ROOT folder) —
-# no whitenoise or extra packages needed, unlike the Render setup.
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+if IS_PRODUCTION:
+    STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # --- MEDIA FILES ---
-# Plain folder, same idea locally and on PythonAnywhere — their disk
-# persists normally, so uploaded course images/PDFs just stay put.
+# Plain folder — no persistent disk on Render's free tier, so uploaded
+# images/PDFs can be wiped on redeploys/restarts. If that happens, just
+# re-run `python manage.py import_existing_courses` to restore them
+# (it's already wired into the Build Command).
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # --- CORS ---
-# Harmless to leave open for a mobile-only API; matters more if you add a web dashboard later.
 CORS_ALLOW_ALL_ORIGINS = True
 
 # --- DRF ---
 REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.AllowAny",  # public read-only API; the admin panel is separately protected by login
+        "rest_framework.permissions.AllowAny",
     ],
 }
 
 # --- LOGGING ---
-# Makes production errors print to console (visible in PythonAnywhere's
-# error log) instead of only trying to email admins (which we haven't set up).
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
