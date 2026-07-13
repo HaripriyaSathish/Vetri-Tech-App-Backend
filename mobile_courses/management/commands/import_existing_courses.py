@@ -41,11 +41,18 @@ def attach_file(model_instance, field_name, relative_path):
     path = resolve_asset(relative_path)
     if not path:
         return False
-    with open(path, "rb") as f:
-        getattr(model_instance, field_name).save(
-            os.path.basename(path), File(f), save=True
-        )
-    return True
+    try:
+        with open(path, "rb") as f:
+            getattr(model_instance, field_name).save(
+                os.path.basename(path), File(f), save=True
+            )
+        return True
+    except Exception as e:
+        # e.g. Cloudinary's free-tier 10MB limit on raw files (PDFs).
+        # Don't let one oversized/failed file crash the whole import —
+        # just skip it and report clearly so it can be fixed separately.
+        print(f"    WARNING: could not upload '{relative_path}': {e}")
+        return False
 
 
 COURSES_DATA = [
