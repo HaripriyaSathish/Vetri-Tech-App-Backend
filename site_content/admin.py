@@ -123,3 +123,23 @@ class HomeProjectAdmin(admin.ModelAdmin):
 class HomeStoryAdmin(admin.ModelAdmin):
     list_display = ["name", "role", "order"]
     ordering = ["order"]    
+
+
+from .models import EnquirySubmission, EnrollmentSubmission
+
+@admin.register(EnquirySubmission)
+class EnquirySubmissionAdmin(admin.ModelAdmin):
+    list_display = ["full_name", "phone", "email", "course_interest", "submitted_at"]
+    list_filter = ["submitted_at", "course_interest"]
+    search_fields = ["full_name", "email", "phone"]
+    readonly_fields = ["submitted_at"]
+    ordering = ["-submitted_at"]
+
+
+@admin.register(EnrollmentSubmission)
+class EnrollmentSubmissionAdmin(admin.ModelAdmin):
+    list_display = ["first_name", "last_name", "phone", "course_name", "mode", "submitted_at"]
+    list_filter = ["submitted_at", "course_name", "mode"]
+    search_fields = ["first_name", "last_name", "email", "phone"]
+    readonly_fields = ["submitted_at"]
+    ordering = ["-submitted_at"]    

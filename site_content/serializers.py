@@ -244,3 +244,20 @@ class HomePageSerializer(serializers.Serializer):
 
     def get_stories(self, obj):
         return HomeStorySerializer(HomeStory.objects.all(), many=True, context=self.context).data    
+    
+
+from .models import EnquirySubmission, EnrollmentSubmission
+
+class EnquirySubmissionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EnquirySubmission
+        fields = ["full_name", "email", "phone", "course_interest", "message"]
+
+
+class EnrollmentSubmissionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EnrollmentSubmission
+        fields = [
+            "first_name", "last_name", "phone", "email", "gender", "dob",
+            "address", "city", "state", "pincode", "course_name", "mode", "message",
+        ]    

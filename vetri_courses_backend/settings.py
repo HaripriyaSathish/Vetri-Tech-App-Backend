@@ -198,3 +198,12 @@ LOGGING = {
         },
     },
 }
+
+# --- EMAIL (for new-lead notifications) ---
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER")       # your Gmail address
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD")  # Gmail App Password, not your real password
+NOTIFY_EMAIL_TO = os.environ.get("NOTIFY_EMAIL_TO", EMAIL_HOST_USER)  # where alerts go
