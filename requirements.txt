@@ -10,3 +10,4 @@ gunicorn
 
    django-cloudinary-storage
    cloudinary
+   resend
