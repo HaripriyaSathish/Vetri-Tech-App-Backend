@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import ContactInfo, Branch, Achievement, ContactFaq
+from .models import ContactInfo, Branch, Achievement, ContactFaq, FooterAddress
 
 
 @admin.register(ContactInfo)
@@ -27,4 +27,10 @@ class AchievementAdmin(admin.ModelAdmin):
 @admin.register(ContactFaq)
 class ContactFaqAdmin(admin.ModelAdmin):
     list_display = ["question", "order"]
+    ordering = ["order"]
+
+
+@admin.register(FooterAddress)
+class FooterAddressAdmin(admin.ModelAdmin):
+    list_display = ["title", "order"]
     ordering = ["order"]
