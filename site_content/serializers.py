@@ -1,5 +1,9 @@
 from rest_framework import serializers
 from .models import ContactInfo, Branch, Achievement, ContactFaq, FooterAddress
+from .models import (
+    AboutIntro, MissionVisionCard, EcosystemCard, TrainingApproachCard,
+    SkillItem, JourneyStep, EnrollItem, ImpactStat,
+)
 
 
 class ContactInfoSerializer(serializers.ModelSerializer):
@@ -73,3 +77,98 @@ class FooterSerializer(serializers.Serializer):
 
     def get_addresses(self, obj):
         return FooterAddressSerializer(FooterAddress.objects.all(), many=True, context=self.context).data
+    
+
+
+class AboutIntroSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AboutIntro
+        fields = [
+            "hero_title", "hero_subtitle",
+            "story_heading", "story_paragraph1", "story_paragraph2", "story_image",
+            "mascot_image",
+            "cta_title", "cta_body", "cta_avatar",
+        ]
+
+
+class MissionVisionCardSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MissionVisionCard
+        fields = ["id", "icon", "title", "description", "order"]
+
+
+class EcosystemCardSerializer(serializers.ModelSerializer):
+    items = serializers.ReadOnlyField()
+
+    class Meta:
+        model = EcosystemCard
+        fields = ["id", "icon", "title", "items", "site_url", "order"]
+
+
+class TrainingApproachCardSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TrainingApproachCard
+        fields = ["id", "text", "order"]
+
+
+class SkillItemSerializer(serializers.ModelSerializer):
+    items = serializers.ReadOnlyField()
+
+    class Meta:
+        model = SkillItem
+        fields = ["id", "icon_name", "title", "items", "order"]
+
+
+class JourneyStepSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = JourneyStep
+        fields = ["id", "icon", "title", "description", "order"]
+
+
+class EnrollItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EnrollItem
+        fields = ["id", "icon", "title", "order"]
+
+
+class ImpactStatSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ImpactStat
+        fields = ["id", "target", "suffix", "decimals", "label", "order"]
+
+
+class AboutPageSerializer(serializers.Serializer):
+    """One combined payload for the whole About page."""
+
+    intro = serializers.SerializerMethodField()
+    mission_vision = serializers.SerializerMethodField()
+    ecosystem = serializers.SerializerMethodField()
+    training_approach = serializers.SerializerMethodField()
+    skills = serializers.SerializerMethodField()
+    journey = serializers.SerializerMethodField()
+    enroll = serializers.SerializerMethodField()
+    impact = serializers.SerializerMethodField()
+
+    def get_intro(self, obj):
+        return AboutIntroSerializer(AboutIntro.load(), context=self.context).data
+
+    def get_mission_vision(self, obj):
+        return MissionVisionCardSerializer(MissionVisionCard.objects.all(), many=True, context=self.context).data
+
+    def get_ecosystem(self, obj):
+        return EcosystemCardSerializer(EcosystemCard.objects.all(), many=True, context=self.context).data
+
+    def get_training_approach(self, obj):
+        return TrainingApproachCardSerializer(TrainingApproachCard.objects.all(), many=True, context=self.context).data
+
+    def get_skills(self, obj):
+        return SkillItemSerializer(SkillItem.objects.all(), many=True, context=self.context).data
+
+    def get_journey(self, obj):
+        return JourneyStepSerializer(JourneyStep.objects.all(), many=True, context=self.context).data
+
+    def get_enroll(self, obj):
+        return EnrollItemSerializer(EnrollItem.objects.all(), many=True, context=self.context).data
+
+    def get_impact(self, obj):
+        return ImpactStatSerializer(ImpactStat.objects.all(), many=True, context=self.context).data    

@@ -1,5 +1,9 @@
 from django.contrib import admin
 from .models import ContactInfo, Branch, Achievement, ContactFaq, FooterAddress
+from .models import (
+    AboutIntro, MissionVisionCard, EcosystemCard, TrainingApproachCard,
+    SkillItem, JourneyStep, EnrollItem, ImpactStat,
+)
 
 
 @admin.register(ContactInfo)
@@ -34,3 +38,53 @@ class ContactFaqAdmin(admin.ModelAdmin):
 class FooterAddressAdmin(admin.ModelAdmin):
     list_display = ["title", "order"]
     ordering = ["order"]
+
+@admin.register(AboutIntro)
+class AboutIntroAdmin(admin.ModelAdmin):
+    def has_add_permission(self, request):
+        return not AboutIntro.objects.exists()
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(MissionVisionCard)
+class MissionVisionCardAdmin(admin.ModelAdmin):
+    list_display = ["title", "order"]
+    ordering = ["order"]
+
+
+@admin.register(EcosystemCard)
+class EcosystemCardAdmin(admin.ModelAdmin):
+    list_display = ["title", "order"]
+    ordering = ["order"]
+
+
+@admin.register(TrainingApproachCard)
+class TrainingApproachCardAdmin(admin.ModelAdmin):
+    list_display = ["order"]
+    ordering = ["order"]
+
+
+@admin.register(SkillItem)
+class SkillItemAdmin(admin.ModelAdmin):
+    list_display = ["title", "icon_name", "order"]
+    ordering = ["order"]
+
+
+@admin.register(JourneyStep)
+class JourneyStepAdmin(admin.ModelAdmin):
+    list_display = ["title", "order"]
+    ordering = ["order"]
+
+
+@admin.register(EnrollItem)
+class EnrollItemAdmin(admin.ModelAdmin):
+    list_display = ["title", "order"]
+    ordering = ["order"]
+
+
+@admin.register(ImpactStat)
+class ImpactStatAdmin(admin.ModelAdmin):
+    list_display = ["label", "target", "order"]
+    ordering = ["order"]    
