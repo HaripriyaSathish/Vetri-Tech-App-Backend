@@ -172,3 +172,75 @@ class AboutPageSerializer(serializers.Serializer):
 
     def get_impact(self, obj):
         return ImpactStatSerializer(ImpactStat.objects.all(), many=True, context=self.context).data    
+    
+from .models import HomeIntro, HomeBenefit, HomeStep, HomeProject, HomeStory, ImpactStat
+
+
+class HomeIntroSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HomeIntro
+        fields = [
+            "hero_title", "hero_description", "hero_bg_image",
+            "whoweare_image", "established_title", "established_text",
+            "whoweare_heading", "whoweare_description",
+            "whychoose_mascot_image",
+            "howitworks_heading", "howitworks_subtext",
+            "projects_heading", "projects_subtext",
+            "stories_heading", "stories_subtext",
+            "cta_heading", "cta_subtext", "cta_mascot_image",
+        ]
+
+
+class HomeBenefitSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HomeBenefit
+        fields = ["id", "icon_name", "title", "description", "order"]
+
+
+class HomeStepSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HomeStep
+        fields = ["id", "icon", "title", "description", "step_number", "order"]
+
+
+class HomeProjectSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HomeProject
+        fields = ["id", "image", "title", "author", "tag", "tall", "order"]
+
+
+class HomeStorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HomeStory
+        fields = ["id", "image", "video", "name", "role", "order"]
+
+
+class HomePageSerializer(serializers.Serializer):
+    """One combined payload for the whole Home page.
+    Stats reuse the same ImpactStat data already used on the About page —
+    single source of truth, edit once in Admin, updates both pages."""
+
+    intro = serializers.SerializerMethodField()
+    stats = serializers.SerializerMethodField()
+    benefits = serializers.SerializerMethodField()
+    steps = serializers.SerializerMethodField()
+    projects = serializers.SerializerMethodField()
+    stories = serializers.SerializerMethodField()
+
+    def get_intro(self, obj):
+        return HomeIntroSerializer(HomeIntro.load(), context=self.context).data
+
+    def get_stats(self, obj):
+        return ImpactStatSerializer(ImpactStat.objects.all(), many=True, context=self.context).data
+
+    def get_benefits(self, obj):
+        return HomeBenefitSerializer(HomeBenefit.objects.all(), many=True, context=self.context).data
+
+    def get_steps(self, obj):
+        return HomeStepSerializer(HomeStep.objects.all(), many=True, context=self.context).data
+
+    def get_projects(self, obj):
+        return HomeProjectSerializer(HomeProject.objects.all(), many=True, context=self.context).data
+
+    def get_stories(self, obj):
+        return HomeStorySerializer(HomeStory.objects.all(), many=True, context=self.context).data    

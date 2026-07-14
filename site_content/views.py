@@ -21,3 +21,11 @@ class AboutPageView(APIView):
     def get(self, request):
         serializer = AboutPageSerializer(instance={}, context={"request": request})
         return Response(serializer.data)    
+    
+
+from .serializers import HomePageSerializer
+
+class HomePageView(APIView):
+    def get(self, request):
+        serializer = HomePageSerializer(instance={}, context={"request": request})
+        return Response(serializer.data)    
